@@ -1,0 +1,16 @@
+{
+    "TestItem": {
+        "useable": false,
+        "type": "",
+        "description": "",
+        "value": 1682,
+        "imgsrc": "he"
+    },
+    "seed": {
+        "useable": true,
+        "type": "seed",
+        "description": "Normal seed",
+        "value": 1,
+        "imgsrc": "./images/seed.png"
+    }
+}

@@ -1,0 +1,57 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: monospace;
+}
+
+body {
+    background-color: rgb(3, 3, 3);
+    
+}
+
+canvas {
+    background-color: rgb(32, 32, 32);
+    margin-top: auto;
+    margin-bottom: auto;
+    top: 0;
+    bottom: 0;
+    position: absolute;
+}
+
+.canvascontainer {
+    display: flex;
+    justify-content: center;
+}
+
+.hud {
+    background-color: #00000080;
+    position: absolute;
+    border-radius: 10px;
+    font-size: 2em;
+    z-index: 5;
+    left: 20px;
+    padding: 20px;
+    bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.hud label {
+    color: white;
+    margin-right: 20px;
+}
+
+.hud input {
+    color: white;
+    border: none;
+    font-size: 1em;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #cccccc1a;
+    outline: #e0e0e06b solid 2px;
+    transition: outline 0.2s;
+}
+
+.hud input:focus {
+    outline: rgb(255, 255, 255) solid 2px;
+}

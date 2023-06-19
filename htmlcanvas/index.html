@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/src/style.css">
+    <title>Gaming</title>
+</head>
+<body>
+    <div class="canvascontainer">
+        <canvas></canvas>
+    </div>
+
+    <div class="hudcontainer">
+        <div class="hud">
+            <label for="messg">Message:</label>
+            <input type="text" id="messg" name="messg" maxlength="25">
+        </div>
+    </div>
+
+    <!-- <script type="text/javascript" src="./main.js"></script> -->
+</body>
+</html>
+
+<script>
+const ws = new WebSocket("ws://containerz.asuscomm.com:8008");
+const canvas = document.querySelector('canvas');
+const c = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let cameraX = 0;
+let cameraY = 0;
+
+function draw_image( image, x, y, scale = 1 ) {
+    c.save();
+    c.translate(x - cameraX, y - cameraY);
+    c.drawImage(image, -image.width/2, -image.height/2, image.width*scale, image.height*scale);
+    c.restore();
+}
+
+function draw_text( text, x, y ) {
+    c.font = "48px monospace";
+    c.fillStyle = 'white';
+    c.fillText(text, x - cameraX, y - cameraY);
+}
+
+const player = new Image();
+player.src = "./images/link.png";
+player.id = "player";
+let x = 0;
+let y = 0;
+let cash = 0;
+let speed = 3;
+let ip = 0;
+
+document.onkeydown = keydown;
+document.onkeyup = keyup;
+
+let keysPressed = {};
+
+function keyup(e) {
+    keysPressed[e.key] = false;
+}
+
+function keydown(e) {
+    keysPressed[e.key] = true;
+}
+
+function movePlayer() {
+    // Move
+    if (keysPressed['Shift']) {
+        speed = 5;
+    } else {
+        speed = 3;
+    }
+
+    if (!(keysPressed['w'] && keysPressed['s']) && !(keysPressed['a'] && keysPressed['d'])) {
+        if (keysPressed['w']) {
+            y -= speed;
+        }
+        else if (keysPressed['s']) {
+            y += speed;
+        }
+        if (keysPressed['a']) {
+            x -= speed;
+        }
+        else if (keysPressed['d']) {
+            x += speed;
+        }
+    }
+}
+
+function sendPlayerLocation() {
+    sendData({
+        "location": 0,
+        "x": x,
+        "y": y,
+    });
+    setTimeout(() => sendPlayerLocation(), 100);
+}
+
+function setCamera() {
+    cameraX = x - canvas.width/2;
+    cameraY = y - canvas.height/2;
+}
+
+function sendData(data) {
+    ws.send(JSON.stringify(data));
+}
+
+ws.addEventListener("open", () => {
+    sendPlayerLocation()
+});
+
+ws.addEventListener("close", () => {
+    ws.close();
+});
+
+let allPlayers = {};
+
+ws.addEventListener("message", ({ data }) => {
+    data = JSON.parse(data);
+
+    if ("ip" in data) {
+        console.log("Start");
+        ip = data.ip;
+        x = data.x;
+        y = data.y;
+        cash = data.cash;
+        loop();
+    }
+
+    // get players location
+    if ("location" in data) {
+        data = data['data'];
+        allPlayers = {};
+
+        for (let i in data) {
+            if (ip != i && data[i].online === true) {
+                allPlayers[i] = data[i];
+            }
+        }
+    }
+
+    // message/noise
+    if ('noise' in data) {
+        textToSpeech(data.noise);
+    }
+});
+
+function drawAllPlayers() {
+    for (i in allPlayers) {
+        const ix = allPlayers[i].x;
+        const iy = allPlayers[i].y;
+        draw_image(player, ix, iy);
+        if ( 'message' in allPlayers[i] ) {
+            draw_text(allPlayers[i].message, ix - 50, iy - 100);
+        }
+    }
+}
+
+const bg = new Image();
+bg.src = './images/grass.jpg'
+function loop() {
+    movePlayer();
+    setCamera();
+
+    draw_image(bg, -1000, -500, 5);
+    draw_image(player, x, y);
+    drawAllPlayers();
+
+    setTimeout(() => {
+        requestAnimationFrame(loop);
+    }, 1000 / 120); // fps
+}
+
+//loop();
+
+const input = document.querySelector("#messg");
+
+input.addEventListener("change", message);
+
+let synth = speechSynthesis;
+
+function textToSpeech(text){
+    let utterance = new SpeechSynthesisUtterance(text);
+    synth.speak(utterance);
+}
+
+function message(e) {
+    //textToSpeech(e.target.value);
+    sendData({
+        "message": e.target.value,
+    });
+}
+</script>
